@@ -1,117 +1,434 @@
-# DEZSYS_GK81_WAREHOUSE_ORM
+# DEZSYS_GK862_DATAWAREHOUSE_ORM_Steinhauser
 
-Join GitHub Repo: https://github.com/ThomasMicheler/DEZSYS_GK862_DATAWAREHOUSE_ORM.git
-   
-This lesson introduces the data accessing model in Spring and the basics of Object Relational Mapping (ORM).
+Fabian Steinhauser
 
-## Introduction
+## Lösungsweg
 
-This exercise is intended to demonstrate the interaction between a programming language (Java) and a persistance layer (MySQL, PostgreSQL).
+### Schritt 1
 
-First you should follow the Spring tutorial ["Accessing data with MySQL"](https://spring.io/guides/gs/accessing-data-mysql) and document all important steps in your protocol. Don't forget to make notes about all problems occured during the setup. Afterwards you should extend the data model of the example and adapt it for a Data Warehouse application (data structure see below). One relation between the entities Datawarehouse and Products is required in this example. Please read the documentation how you implementation entity relations using the ORM model.
+Zuerst wurde das Projekt in IntelliJ geöffnet und mit meinem eigenen GitHub-Repository verbunden.
 
-Document all individual implementation steps and any problems that arise in a log (Markdown).  
-Create a GITHUB repository for this project and add the link to it in the comments.
-
-## Requirements
-
-*   MySQL DMS
-     *  Local MySQL Service   
-     *  MySQL Docker Container
-*   Gradle 8 or higher  
-*   Java SDK 18 or higher  
-     
-## Data Structure - Data Warehouse
+```bash
+git remote remove origin
+git remote add origin git@github.com:FabianBoolean/DEZSYS_GK862_DATAWAREHOUSE_ORM_Steinhauser.git
+git push -u origin main
 ```
-<warehouseData>
-    <warehouseID>001</warehouseID>
-    <warehouseName>Linz Bahnhof</warehouseName>
-    <warehouseAddress>Bahnhofsstrasse 27/9</warehouseAddress>
-    <warehousePostalCode>Linz</warehousePostalCode>
-    <warehouseCity>Linz</warehouseCity>
-    <warehouseCountry>Austria</warehouseCountry>
-    <timestamp>2021-09-12 08:52:39.077</timestamp>
-    <productData>
-         <product>
-             <productID>00-443175</productID>
-             <productName>Bio Orangensaft Sonne</productName>
-             <productCategory>Getraenk</productCategory>
-             <productQuantity>2500</productQuantity>
-             <productUnit>Packung 1L</productUnit>
-         </product>
-         <product>
-             <productID>00-871895</productID>
-             <productName>Bio Apfelsaft Gold</productName>
-             <productCategory>Getraenk</productCategory>
-             <productQuantity>3420</productQuantity>
-             <productUnit>Packung 1L</productUnit>
-         </product>
-    </productData>
-</warehouseData>
+
+Danach wurde das Projekt auf GitHub gepusht.
+
+---
+
+### Schritt 2
+
+MySQL wurde installiert und gestartet, da beim ersten Start der Anwendung noch keine Datenbankverbindung funktioniert hat.
+
+```bash
+brew install mysql
+brew services start mysql
 ```
-## Important Commands. 
 
-*   Use gradle to build the application  
-     `gradle clean`   
-     `gradle bootRun`   
+Danach wurde überprüft, ob MySQL funktioniert:
 
-*   Connect to MySQL Shell  
-     `mysqlsh <username>@localhost`   
+```bash
+mysql --version
+```
 
-*   MySQL Shell Commands  
-     `show databases; // list all local databases `   
-     `use example;  // switch to a local database "example" `   
-     `show tables;           // list all of current database   `   
-     `create table example;   // create a SQL table with the name "example"   ` 
+Anschließend wurde eine Verbindung zu MySQL hergestellt:
 
-## Assessment
+```bash
+mysql -u root
+```
 
-- Group size: 1 Person.  
-- Result by protocol and delivery meeting (in English). 
-- Requirements **Grundlagen**. 
-    * Answer the questions below about the ORM framework.  
-    * Use the tutorial ["Accessing data with MySQL"](https://spring.io/guides/gs/accessing-data-mysql) 
-    * Implement the MySQL example with the User database 
-    * Create a new user record (eg. curl -X POST "http://localhost:8080/demo/add" -d "name=John" -d "email=john@example.com")
-    * Document each single development step in your protocol and describe the most important code snippets in few sentences. Furthermore, the output of the application and any problems that occur should be documented in submission document.
-    * Customize the data model for the Data Warehouse application (min. 2 entities with 1 relation).  
-    * Insert following records: 2 Data Warehouse records, 10 Product records.  
-    * Document which parts of the program need to be adapted   
-*  Extended Requirements **Erweiterte Grundlagen**
-   *   Find out which methods are available for the CrudRepository to collect data   
-        https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/repository/CrudRepository.html.    
-   *  Extend the Data Warehouse repository with following functionalities:   
-       * Collect all data of one data warehouse specified by datawarehouseID.  
-       * Collect a single product of a data warehouse specified by datawarehouseID and productID.  
-       * Update a data warehouse using datawarehouseID. 
-   * Document the parts of your project which have to be extend
-   * Extend the data model with data about the customer purchases for a product and warehouse locations (eg. records for sold products like data/time, amount, location/warehouse)
-   * Insert 30 records for sold products
-*  Extended Requirements **Vertiefung**  
-   * Create 250-300 training records (products, purchases)
-   * Connect your application with an LLM (local eg. Ollama, cloud-based eg. Google Gemini) and generate a preview of sales numgers for the all warehouses and products over the coming months.
+Die Datenbank wurde erstellt:
 
+```sql
+CREATE DATABASE example;
+SHOW DATABASES;
+```
+
+Danach konnte die Spring Boot Anwendung erfolgreich mit MySQL verbunden werden.
+
+---
+
+### Schritt 3
+
+Die Datei `application.properties` wurde für die Datenbankverbindung verwendet.
+
+```properties
+spring.application.name=demo
+spring.jpa.hibernate.ddl-auto=update
+spring.datasource.url=jdbc:mysql://${MYSQL_HOST:localhost}:3306/example
+spring.datasource.username=root
+spring.datasource.password=
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+```
+
+Mit `spring.jpa.hibernate.ddl-auto=update` werden die Tabellen automatisch aus den Entity-Klassen erstellt bzw. aktualisiert.
+
+---
+
+### Schritt 4
+
+Danach wurde zuerst das vorhandene User-Beispiel getestet.
+
+User hinzufügen:
+
+```bash
+curl -X POST "http://localhost:8080/demo/add" -d "name=Fabian" -d "email=fabian@test.at"
+```
+
+Ausgabe:
+
+```text
+Saved
+```
+
+User anzeigen:
+
+```bash
+curl "http://localhost:8080/demo/all"
+```
+
+Ausgabe:
+
+```json
+[{"id":1,"name":"Fabian","email":"fabian@test.at"}]
+```
+
+Damit wurde getestet, ob Spring Boot, MySQL und das Repository richtig funktionieren.
+
+---
+
+### Schritt 5
+
+Danach wurden die Klassen für die Warehouse-Anwendung erstellt.
+
+Es wurden folgende Klassen ergänzt:
+
+- `Warehouse`
+- `Product`
+- `WarehouseRepository`
+- `ProductRepository`
+
+### Warehouse
+
+```java
+@Entity
+public class Warehouse {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Integer id;
+
+    private String warehouseName;
+    private String warehouseAddress;
+    private String warehouseCity;
+    private String warehouseCountry;
+
+    @OneToMany
+    private List<Product> products;
+}
+```
+
+### Product
+
+```java
+@Entity
+public class Product {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Integer id;
+
+    private String productName;
+    private String productCategory;
+    private Integer productQuantity;
+    private String productUnit;
+
+    @ManyToOne
+    private Warehouse warehouse;
+}
+```
+
+Die Beziehung wurde mit `@OneToMany` und `@ManyToOne` umgesetzt.  
+Ein Warehouse kann mehrere Produkte haben, ein Produkt gehört zu einem Warehouse.
+
+---
+
+### Schritt 6
+
+Für beide Entities wurden eigene Repositories erstellt.
+
+```java
+public interface WarehouseRepository extends CrudRepository<Warehouse, Integer> {
+}
+```
+
+```java
+public interface ProductRepository extends CrudRepository<Product, Integer> {
+}
+```
+
+Dadurch stehen einfache CRUD-Methoden automatisch zur Verfügung.
+
+---
+
+### Schritt 7
+
+Der `MainController` wurde erweitert.  
+Die vorhandenen User-Endpunkte wurden behalten und neue Endpunkte für Warehouse und Product ergänzt.
+
+```text
+POST /demo/warehouse/add
+GET  /demo/warehouse/all
+POST /demo/product/add
+GET  /demo/product/all
+```
+
+Mit diesen Endpunkten können Warehouses und Produkte gespeichert und abgefragt werden.
+
+---
+
+### Schritt 8
+
+Es wurden zwei Warehouses eingefügt.
+
+```bash
+curl -X POST "http://localhost:8080/demo/warehouse/add" \
+-d "warehouseName=Linz Bahnhof" \
+-d "warehouseAddress=Bahnhofsstrasse 27/9" \
+-d "warehouseCity=Linz" \
+-d "warehouseCountry=Austria"
+```
+
+```bash
+curl -X POST "http://localhost:8080/demo/warehouse/add" \
+-d "warehouseName=Wien Zentrum" \
+-d "warehouseAddress=Hauptstrasse 10" \
+-d "warehouseCity=Wien" \
+-d "warehouseCountry=Austria"
+```
+
+Danach wurden zehn Produkte eingefügt und jeweils einem Warehouse zugeordnet.
+
+Beispiel:
+
+```bash
+curl -X POST "http://localhost:8080/demo/product/add" \
+-d "productName=Bio Orangensaft Sonne" \
+-d "productCategory=Getraenk" \
+-d "productQuantity=2500" \
+-d "productUnit=Packung 1L" \
+-d "warehouseId=1"
+```
+
+---
+
+### Schritt 9
+
+Die Daten wurden über die REST-Endpunkte überprüft.
+
+Warehouses anzeigen:
+
+```bash
+curl "http://localhost:8080/demo/warehouse/all"
+```
+
+Produkte anzeigen:
+
+```bash
+curl "http://localhost:8080/demo/product/all"
+```
+
+Dabei wurden alle Produkte inklusive zugehörigem Warehouse zurückgegeben.
+
+---
+
+### Schritt 10
+
+Zusätzlich wurden die Daten direkt in MySQL kontrolliert.
+
+Tabellen anzeigen:
+
+```sql
+USE example;
+SHOW TABLES;
+```
+
+Dabei wurden unter anderem diese Tabellen erstellt:
+
+```text
+product
+warehouse
+warehouse_products
+user
+```
+
+Produkte anzeigen:
+
+```sql
+SELECT id, product_name, product_category, product_quantity, product_unit, warehouse_id FROM product;
+```
+
+Dabei wurden 10 Produkte angezeigt.
+
+Warehouses anzeigen:
+
+```sql
+SELECT * FROM warehouse;
+```
+
+Dabei wurden 2 Warehouses angezeigt.
+
+---
+
+## Aufgetretene Probleme
+
+### MySQL war nicht installiert
+
+Beim Prüfen von MySQL kam zuerst:
+
+```text
+zsh: command not found: mysql
+```
+
+Das Problem wurde mit Homebrew gelöst:
+
+```bash
+brew install mysql
+```
+
+---
+
+### Spring Boot konnte MySQL nicht erreichen
+
+Beim Start der Anwendung kam zuerst:
+
+```text
+Communications link failure
+Connection refused
+```
+
+Der Grund war, dass MySQL noch nicht gestartet war und die Datenbank `example` noch nicht existiert hat.
+
+Lösung:
+
+```bash
+brew services start mysql
+mysql -u root
+CREATE DATABASE example;
+```
+
+Danach konnte die Anwendung erfolgreich starten.
+
+---
+
+### Falscher HTTP-Request
+
+Beim Öffnen von `/demo/add` im Browser kam:
+
+```text
+Method Not Allowed
+```
+
+Der Grund war, dass der Endpoint nur POST unterstützt.  
+Gelöst wurde es mit `curl -X POST`.
+
+---
+
+### GitHub Login mit Passwort funktionierte nicht
+
+Beim Pushen kam:
+
+```text
+Password authentication is not supported for Git operations.
+```
+
+Das Problem wurde mit einem SSH-Key gelöst.
+
+```bash
+ssh-keygen -t ed25519 -C "FabianBoolean"
+ssh -T git@github.com
+```
+
+Danach wurde das Repository per SSH verbunden.
+
+---
+
+## Git Commits
+
+Es wurden mehrere Commits gemacht:
+
+```text
+Setup Spring Boot and MySQL connection
+Add project gitignore
+Add warehouse and product entities
+Add warehouse and product endpoints
+```
+
+---
 
 ## Questions
 
-* What is ORM and how is JPA used?  
-* What is the application.properties used for and where must it be stored?  
-* Which annotations are frequently used for entity types? Which key points must be observed?   
-* What methods do you need for CRUD operations?  
+### What is ORM and how is JPA used?
 
-## Links & Further Resources
+ORM bedeutet Object Relational Mapping.  
+Dabei werden Java-Klassen auf Tabellen in einer relationalen Datenbank abgebildet.
 
-* Object Relational Mapping (ORM) Data Access:   
-   https://docs.spring.io/spring-framework/reference/data-access/orm.html
-* Accessing data with MySQL.  
-   https://spring.io/guides/gs/accessing-data-mysql
-* Accessing Data with JPA   
-   https://spring.io/guides/gs/accessing-data-jpa
-* Difference between Hibernate and Spring Data:  
-   https://dzone.com/articles/what-is-the-difference-between-hibernate-and-sprin-1
-* Introduction Hibernate:   
-   https://vicksheet.medium.com/getting-started-with-hibernate-an-introduction-to-the-orm-framework-for-java-applications-fd97af01b7a6
-* Video:   
-   https://www.youtube.com/watch?v=NC-1j1grMPI&ab_channel=ManningPublications
+JPA wird verwendet, um diese Zuordnung mit Annotationen zu beschreiben. Hibernate übernimmt dann die Umsetzung in der Datenbank.
 
-FINAL
+---
+
+### What is the application.properties used for and where must it be stored?
+
+Die Datei `application.properties` enthält Konfigurationen für die Spring Boot Anwendung.
+
+Zum Beispiel:
+
+- Datenbank-URL
+- Benutzername
+- Passwort
+- JPA-Einstellungen
+
+Die Datei muss hier liegen:
+
+```text
+src/main/resources/application.properties
+```
+
+---
+
+### Which annotations are frequently used for entity types?
+
+Wichtige Annotationen sind:
+
+- `@Entity`
+- `@Id`
+- `@GeneratedValue`
+- `@OneToMany`
+- `@ManyToOne`
+
+Wichtig ist, dass jede Entity einen Primary Key besitzt.
+
+---
+
+### What methods do you need for CRUD operations?
+
+Wichtige Methoden aus `CrudRepository` sind:
+
+- `save()`
+- `findAll()`
+- `findById()`
+- `deleteById()`
+
+---
+
+## Links
+
+https://spring.io/guides/gs/accessing-data-mysql
+
+https://spring.io/guides/gs/accessing-data-jpa
+
+https://docs.spring.io/spring-framework/reference/data-access/orm.html
+
+https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/repository/CrudRepository.html
